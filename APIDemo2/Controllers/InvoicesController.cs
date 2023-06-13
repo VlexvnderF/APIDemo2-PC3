@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using APIDemo2.Data;
 using APIDemo2.Models;
+using APIDemo2.Request;
 
 namespace APIDemo2.Controllers
 {
@@ -81,12 +82,21 @@ namespace APIDemo2.Controllers
         // POST: api/Invoices
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public async Task<ActionResult<Invoice>> PostInvoice(Invoice invoice)
+        public async Task<ActionResult<Invoice>> PostInvice(InvoiceRequest_v1 request)
         {
           if (_context.Invoice == null)
           {
               return Problem("Entity set 'APIDemo2Context.Invoice'  is null.");
           }
+            
+
+          var invoice = Invoice
+                {
+                CustomerId = request.CustomerID
+                    
+            }
+            
+            
             _context.Invoice.Add(invoice);
             await _context.SaveChangesAsync();
 
