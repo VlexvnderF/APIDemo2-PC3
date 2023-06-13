@@ -1,8 +1,12 @@
 using APIDemo2.Models;
 using Microsoft.EntityFrameworkCore;
 using System;
+using Microsoft.Extensions.DependencyInjection;
+using APIDemo2.Data;
 
 var builder = WebApplication.CreateBuilder(args);
+builder.Services.AddDbContext<APIDemo2Context>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("APIDemo2Context") ?? throw new InvalidOperationException("Connection string 'APIDemo2Context' not found.")));
 
 
 builder.Services.AddDbContext<DemoContext>(
