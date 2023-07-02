@@ -15,30 +15,36 @@ namespace APIDemo2.Controllers
     [ApiController]
     public class InvoicesController : ControllerBase
     {
-        private readonly APIDemo2Context _context;
+        private readonly DemoContext _context;
 
-        public InvoicesController(APIDemo2Context context)
+        public InvoicesController(DemoContext context)
         {
             _context = context;
         }
 
         // GET: api/Invoices
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Invoice>>> GetInvoice()
+        public async Task<ActionResult<IEnumerable<Invoice>>> GetInvoices()
         {
-            var invoices = await _context.Invoice.Where(i => !i.IsDeleted).ToListAsync();
-            return invoices;
+          if (_context.Invoices == null)
+          {
+              return NotFound();
+          }
+            return await _context.Invoices
+                .Include(x => x.Details).
+                ThenInclude(d=>d.Product).
+                ToListAsync();
         }
 
         // GET: api/Invoices/5
         [HttpGet("{id}")]
         public async Task<ActionResult<Invoice>> GetInvoice(int id)
         {
-          if (_context.Invoice == null)
+          if (_context.Invoices == null)
           {
               return NotFound();
           }
-            var invoice = await _context.Invoice.FindAsync(id);
+            var invoice = await _context.Invoices.FindAsync(id);
 
             if (invoice == null)
             {
@@ -82,22 +88,14 @@ namespace APIDemo2.Controllers
         // POST: api/Invoices
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public async Task<ActionResult<Invoice>> PostInvice(InvoiceRequest_v1 request)
+        public async Task<ActionResult<Invoice>> PostInvoice(Invoice invoice)
         {
-          if (_context.Invoice == null)
+          if (_context.Invoices == null)
           {
-              return Problem("Entity set 'APIDemo2Context.Invoice'  is null.");
+              return Problem("Entity set 'DemoContext.Invoices'  is null.");
           }
-            
 
-          var invoice = Invoice
-                {
-                CustomerId = request.CustomerID
-                    
-            }
-            
-            
-            _context.Invoice.Add(invoice);
+            _context.Invoices.Add(invoice);
             await _context.SaveChangesAsync();
 
             return CreatedAtAction("GetInvoice", new { id = invoice.InvoiceID }, invoice);
@@ -107,13 +105,18 @@ namespace APIDemo2.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteInvoice(int id)
         {
-            var invoice = await _context.Invoice.FindAsync(id);
+            if (_context.Invoices == null)
+            {
+                return NotFound();
+            }
+            var invoice = await _context.Invoices.FindAsync(id);
             if (invoice == null)
             {
                 return NotFound();
             }
 
-            invoice.IsDeleted = true;
+            invoice.Estado = false;
+            _context.Entry(invoice).State = EntityState.Modified;
             await _context.SaveChangesAsync();
 
             return NoContent();
@@ -121,7 +124,7 @@ namespace APIDemo2.Controllers
 
         private bool InvoiceExists(int id)
         {
-            return (_context.Invoice?.Any(e => e.InvoiceID == id)).GetValueOrDefault();
+            return (_context.Invoices?.Any(e => e.InvoiceID == id)).GetValueOrDefault();
         }
     }
 }
